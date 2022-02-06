@@ -1,9 +1,9 @@
 
 #R Version: 4.0.3
 
-####### PACKAGES AND DATABASES ########
+# Packages and databases -------------------------------------------------------
 
-########### Loading all packages needed
+########################## Loading all packages needed #########################
 library(tidyverse)
 library(car)
 library(agricolae)
@@ -27,23 +27,24 @@ library(CCA)  #for CCA
 library(effsize) #for effect size
 library(factoextra) # para get_pca_var y fviz_pca_biplot
 
-############# Loaded the databases
+############################ Loading databases  ################################
+
 Muestreo_UR <- read.csv("Database/Muestreo_UR_Merida_2018.csv")[,-1]
 #Sum.Muestreo_UR <- read.csv("Database/Muestreo_Summary.csv")[-1]
 Sum.Muestreo_UR1 <- read.csv("Database/Muestreo_Summary1.csv")[-1]
 
 
-# Changing columns to factors
+## Changing columns to factors -------------------------------------------------
+
 Muestreo_UR$site <-as.factor(Muestreo_UR$site)
 Muestreo_UR$area <-as.factor(Muestreo_UR$area)
 Muestreo_UR$ambient <-as.factor(Muestreo_UR$ambient)
-
 Muestreo_UR<-Muestreo_UR[Muestreo_UR$area!="open",]
 
 
-############ FUNCTIONS ###########
+############################# FUNCTIONS ########################################
 
-##Function for Standard Errors
+## Function for Standard Errors ----
 se<-function(x, na.rm=F){
   if(na.rm==F){
     se=sd(x)/sqrt(length(x))
@@ -57,9 +58,9 @@ se<-function(x, na.rm=F){
 }
 
 
-##Corralations between soil nutrient and characteristics
+## Corralations between soil nutrient and characteristics ----
 
-#extract R-squared
+## extract R-squared ----
 cor.r <- function(X, dfr = nrow(X) - 2) {
   R <- cor(X)
   above <- row(R) < col(R)
@@ -68,14 +69,14 @@ cor.r <- function(X, dfr = nrow(X) - 2) {
   R
 }
 
-#as matrix
+## as matrix ----
 cor.r.m <- function(X, dfr = nrow(X) - 2) {
   R <- cor(X)
   above <- row(R) < col(R)
   R
 }
 
-#extract P-values
+## extract P-values ----
 cor.prob <- function(X, dfr = nrow(X) - 2) {
   R <- cor(X)
   above <- row(R) < col(R)
@@ -88,7 +89,7 @@ cor.prob <- function(X, dfr = nrow(X) - 2) {
   cor.mat
 }
 
-#as matrix
+## as matrix ----
 cor.prob.m <- function(X, dfr = nrow(X) - 2) {
   R <- cor(X)
   above <- row(R) < col(R)
@@ -101,30 +102,20 @@ cor.prob.m <- function(X, dfr = nrow(X) - 2) {
   cor.mat
 }
 
+#///////////////////////////////////////////////////////////////////////////////
+############################   GRAFICS AND ANALYSES    #########################
+#///////////////////////////////////////////////////////////////////////////////
 
-################################################################################
-
-############################################ 
-##############                ############## 
-##############   GRAFICS AND  ############## 
-##############    ANALYSES    ##############
-##############                ############## 
-############################################ 
-
-
-
-######################################
-#######    Nutrient Analyses   #######
-######################################
+###########################    Nutrient Analyses   #############################
 
 ##ESTOS SON PARTE DE LOS RESULTADOS
 #ESTOS ANALISIS SE MUESTRAN EN TABLA 1
 
 
-####### PH * AREA #######
+## PH * AREA -------------------------------------------------------------------
 
 #Linear regresion
-PHSOILa <- lm(pH~area, Sum.Muestreo_UR1)
+PHSOILa <- lm(pH ~ area, Sum.Muestreo_UR1)
 summary(PHSOILa)
 anova(PHSOILa)
 
@@ -133,11 +124,14 @@ plot(PHSOILa,2)#the data is normaly distributed
 ols_test_normality(PHSOILa)#TESTING RESIDUALS
 
 
-SP<-summary(lm(pH~area, Sum.Muestreo_UR1)) 
-cbind(area=c("rural", "urban"),
-      as.data.frame(cbind(mean=c(SP$coefficients[1],
-                                 SP$coefficients[1]+SP$coefficients[2]),
-                          se=c(SP$coefficients[3],SP$coefficients[4]))))
+SP <- summary(lm(pH ~ area, Sum.Muestreo_UR1)) #POR QUE VUELVES A CORRER EL MODELO?
+#SP<- summary (PHSOILa) # evita correr de vuelta el modelo 
+cbind(area = c("rural", "urban"),
+      as.data.frame(cbind(
+        mean = c(SP$coefficients[1],
+                 SP$coefficients[1] + SP$coefficients[2]),
+        se = c(SP$coefficients[3], SP$coefficients[4])
+      )))
 #Graphic
 pHarea<-ggplot(subset(Sum.Muestreo_UR1, !is.na(pH)), 
        aes(x=area, y=pH, fill=area))+
@@ -153,6 +147,9 @@ pHarea<-ggplot(subset(Sum.Muestreo_UR1, !is.na(pH)),
             aes(x=area,y=0.05+Max.pH,
                 label=c("a","b")),vjust=0)
 
+# ESTARIA BUENO QUE TUVIERAS UNA RUTINA QUE SALVARA CADA GRAFICO QUE TE INTERESA
+# Y QUE ESTUVIERA NUMERADO POR EL GRAFICO QUE LLEVA EL PAPER PODRIAS USAR 
+#  ggsave(file="test.svg", plot=image, width=10, height=8)
 
 pHarea
 ##ggpredict
@@ -160,9 +157,7 @@ fit_PHSOILa<-ggpredict(PHSOILa, terms=c("area"))
 plot(fit_PHSOILa)
 
 
-
-
-####### K * AREA #######
+## K * AREA ------------------------------------------------------------------
 
 #Linear regresion
 KSOILa <- lm(log(K)~area, Sum.Muestreo_UR1)
@@ -205,9 +200,7 @@ Karea<-ggplot(subset(Sum.Muestreo_UR1, !is.na(K)),
   scale_x_discrete(labels=c("rural" = "Rural", 
                             "sidew" = "Profundo"))
 
-
-
-####### P * AREA #######
+## P * AREA --------------------------------------------------------------------
 
 #Linear regresion
 PSOILa <- lm(log(P)~area, Sum.Muestreo_UR1)
@@ -235,9 +228,6 @@ cbind(area=c("rural", "urban"),
                                  SP$coefficients[1]+SP$coefficients[2]),
                           se=c(SP$coefficients[3],SP$coefficients[4]))))
 
-
-
-
 #Graphic
 Parea<-ggplot(subset(Sum.Muestreo_UR1, !is.na(P)), 
        aes(x=area, y=P, fill=area))+
@@ -255,7 +245,7 @@ Parea<-ggplot(subset(Sum.Muestreo_UR1, !is.na(P)),
                 label=c("b","a")),vjust=0)
 
 
-####### N * AREA #######
+## N * AREA --------------------------------------------------------------------
 
 #Linear regresion
 NSOILa <- lm(log(N)~area, Sum.Muestreo_UR1)
@@ -304,7 +294,7 @@ grid.arrange(pHarea, Karea, Parea, Narea,
 
 
 
-####### Ca * AREA #######
+## Ca * AREA -------------------------------------------------------------------
 
 #Linear Model
 CaSOILa <- lm(log(Ca)~area, Sum.Muestreo_UR1)
@@ -312,8 +302,8 @@ summary(CaSOILa)
 anova(CaSOILa)
 
 hist(log(Sum.Muestreo_UR1$Ca))
-plot(CaSOILa,2)#the data is NOT normaly distributed
-ols_test_normality(CaSOILa)#TESTING RESIDUALS
+plot(CaSOILa,2)            #the data is NOT normaly distributed
+ols_test_normality(CaSOILa) #TESTING RESIDUALS
 
 
 SP<-summary(lm(Ca~area, Sum.Muestreo_UR1)) 
@@ -335,8 +325,7 @@ summary(CaSOILa1)
 
 
 
-####### Na * AREA #######
-
+## Na * AREA --------------------------------------------------------------------
 
 #Linear Model
 NaSOILa <- lm(log(Na)~area, Sum.Muestreo_UR1)
@@ -368,84 +357,94 @@ cbind(area=c("rural", "urban"),
 
 
 
-
-#Extract means, sd & se
-Sum.Muestreo_UR1 %>% 
-  group_by(area) %>% 
+### Table 1. Extract means, sd & se --------------------------------------------
+Sum.Muestreo_UR1 %>%
+  group_by(area) %>%
   summarise(
-    pH_mean=mean(pH, na.rm = T),
-    pH_sd=sd(pH, na.rm = T),
-    pH_se=se(pH, na.rm = T),
-    K_mean=mean(K, na.rm = T),
-    K_sd=sd(K, na.rm = T),
-    K_se=se(K, na.rm = T),
-    P_mean=mean(P, na.rm = T),
-    P_sd=sd(P, na.rm = T),
-    P_se=se(P, na.rm = T),
-    N_mean=mean(N, na.rm = T),
-    N_sd=sd(N, na.rm = T),
-    N_se=se(N, na.rm = T),
+    pH_mean = mean(pH, na.rm = T),
+    pH_sd = sd(pH, na.rm = T),
+    pH_se = se(pH, na.rm = T),
+    K_mean = mean(K, na.rm = T),
+    K_sd = sd(K, na.rm = T),
+    K_se = se(K, na.rm = T),
+    P_mean = mean(P, na.rm = T),
+    P_sd = sd(P, na.rm = T),
+    P_se = se(P, na.rm = T),
+    N_mean = mean(N, na.rm = T),
+    N_sd = sd(N, na.rm = T),
+    N_se = se(N, na.rm = T),
     
-    Ca_mean=mean(Ca, na.rm = T),
-    Ca_sd=sd(Ca, na.rm = T),
-    Ca_se=se(Ca, na.rm = T),
-    Na_mean=mean(Na, na.rm = T),
-    Na_sd=sd(Na, na.rm = T),
-    Na_se=se(Na, na.rm = T)
+    Ca_mean = mean(Ca, na.rm = T),
+    Ca_sd = sd(Ca, na.rm = T),
+    Ca_se = se(Ca, na.rm = T),
+    Na_mean = mean(Na, na.rm = T),
+    Na_sd = sd(Na, na.rm = T),
+    Na_se = se(Na, na.rm = T)
   ) -> mean_suelos
 
 (mean_suelos<-as.data.frame(mean_suelos))
 
+### Obteniendo effect sizes ---------------------------------------------------- 
 
-
-#effect size
-#cohen.d(?~area, data=Sum.Muestreo_UR1, na.action = na.omit, hedges.correction=T)
-#No se uso en los resultados
-
-Sum.Muestreo_UR1 %>%  
+effsize_suelos <- Sum.Muestreo_UR1 %>%
   summarise(
-    pH_effsize=cohen.d(pH~area, data=Sum.Muestreo_UR1, 
-                       na.action = na.omit, 
-                       hedges.correction=T)[[4]],
-    
-    K_effsize=cohen.d(K~area, data=Sum.Muestreo_UR1, 
-                      na.action = na.omit, 
-                      hedges.correction=T)[[4]],
-    
-    P_effsize=cohen.d(P~area, data=Sum.Muestreo_UR1, 
-                      na.action = na.omit, 
-                      hedges.correction=T)[[4]],
-    
-    N_effsize=cohen.d(N~area, data=Sum.Muestreo_UR1, 
-                      na.action = na.omit, 
-                      hedges.correction=T)[[4]],
-    
-    Ca_effsize=cohen.d(Ca~area, data=Sum.Muestreo_UR1, 
-                       na.action = na.omit, 
-                       hedges.correction=T)[[4]],
-    
-    Na_effsize=cohen.d(Na~area, data=Sum.Muestreo_UR1, 
-                       na.action = na.omit, 
-                       hedges.correction=T)[[4]],
-  ) -> effsize_suelos
+    pH_effsize = cohen.d(
+      pH ~ area,
+      data = Sum.Muestreo_UR1,
+      na.action = na.omit,
+      hedges.correction = T
+    )[[4]],
+    K_effsize = cohen.d(
+      K ~ area,
+      data = Sum.Muestreo_UR1,
+      na.action = na.omit,
+      hedges.correction = T
+    )[[4]],
+    P_effsize = cohen.d(
+      P ~ area,
+      data = Sum.Muestreo_UR1,
+      na.action = na.omit,
+      hedges.correction = T
+    )[[4]],
+    N_effsize = cohen.d(
+      N ~ area,
+      data = Sum.Muestreo_UR1,
+      na.action = na.omit,
+      hedges.correction = T
+    )[[4]],
+    Ca_effsize = cohen.d(
+      Ca ~ area,
+      data = Sum.Muestreo_UR1,
+      na.action = na.omit,
+      hedges.correction = T
+    )[[4]],
+    Na_effsize = cohen.d(
+      Na ~ area,
+      data = Sum.Muestreo_UR1,
+      na.action = na.omit,
+      hedges.correction = T
+    )[[4]],
+  )
 
 (effsize_suelos<-as.data.frame(effsize_suelos))
 
 
 
-###################################################
-#### CORRELATIONS BETWEEN SOIL CHARACTERISTICS ####
-###################################################
+#///////////////////////////////////////////////////////////////////////////////
+#################### CORRELATIONS BETWEEN SOIL CHARACTERISTICS  ################
+#///////////////////////////////////////////////////////////////////////////////
 
-##SE MUESTRAN EN RESULTADOS, TABLA SUPLEMENTARIA
 
+## Table 2S? SE MUESTRAN EN RESULTADOS, TABLA SUPLEMENTARIA --------------------
+
+### cor matrices ---------------------------------------------------------------
 cor.r(Sum.Muestreo_UR1[,c(25,26,27,30)])#R-squared
 cor.prob(Sum.Muestreo_UR1[,c(25,26,27,30)])#P-values
 
 cor.r(Sum.Muestreo_UR1[,c(25,26,27,30,28,29,24)])#R-squared
 cor.prob(Sum.Muestreo_UR1[,c(25,26,27,30,28,29,24)])#P-values
 
-
+### heat map -------------------------------------------------------------------
 hmap_cor<-cor(Sum.Muestreo_UR1[,c(25,26,27,30,28,29,24)])
 rownames(hmap_cor)[7]<-"Col"
 colnames(hmap_cor)[7]<-"Col"
@@ -484,55 +483,58 @@ corr_heatmap+
   guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
                                title.position = "top", title.hjust = 0.5))
 
-
-
-###################################################
-####         PCA SOIL CHARACTERISTICS          ####
-###################################################
+#///////////////////////////////////////////////////////////////////////////////
+#################         PCA SOIL CHARACTERISTICS    ##########################
+#///////////////////////////////////////////////////////////////////////////////
 
 ## SE MUESTRAN EN RESULTADOS
 
-subset(Sum.Muestreo_UR1, area=="sidew")
+subset(Sum.Muestreo_UR1, area == "sidew")
 
-soilpca<-Sum.Muestreo_UR1[,c(25:30)]
-soil_spore_m<-Sum.Muestreo_UR1[,c(25:30,42,44,24)]
+soilpca <- Sum.Muestreo_UR1[, c(25:30)]
+soil_spore_m <- Sum.Muestreo_UR1[, c(25:30, 42, 44, 24)]
 
 row.names(soilpca)<-Sum.Muestreo_UR1$site
+
+##  Transformaciones  ----------------------------------------------------------
 # Estas transformaciones son las mismas que se usaron en el Structural eq modelling
 # en particular se trabaja una re escalarización de P y Ca para que las varianzas 
 # sean en ordenes de magnitud similares a las de las otras variables. 
 # como PCA tambien requiere normalidad se hicieron las transformaciones necesarias
 # y aplicadas en Str. eq. Modl. 
 
-soilpca<-soilpca%>%transmute(
-                 t.pH = scale(log(pH)),
-                 t.N = scale(log(N)),
-                 t.K = scale(log(K)),
-                 t.Na = scale(log(Na)),
-                 t.Ca = scale(log(Ca/100)),
-                 t.P = scale(log(P/100)))
+soilpca <- soilpca %>% transmute(
+  t.pH = scale(log(pH)),
+  t.N = scale(log(N)),
+  t.K = scale(log(K)),
+  t.Na = scale(log(Na)),
+  t.Ca = scale(log(Ca / 100)),
+  t.P = scale(log(P / 100))
+)
 
+### PCA analysis --------------------------------------------------------------
 PCAsoil <- prcomp(soilpca, scale = TRUE)
 summary(PCAsoil)
-PCAsoil$rotation # loadings. <---- MUY IMPORTANTE REPORTAR. 
-PCAsoil$center # media 
-PCAsoil$sd # desv estandar 
+PCAsoil$rotation # loadings. <---- MUY IMPORTANTE REPORTAR.
+PCAsoil$center # media
+PCAsoil$sd # desv estandar
 
-PCAsoil1<-PCAsoil[["x"]][,1]
-PCAsoil2<-PCAsoil[["x"]][,2]
+PCAsoil1 <- PCAsoil[["x"]][, 1]
+PCAsoil2 <- PCAsoil[["x"]][, 2]
 
+Sum.Muestreo_UR2 <- cbind(Sum.Muestreo_UR1, PCAsoil1, PCAsoil2)
 
-Sum.Muestreo_UR2<-cbind(Sum.Muestreo_UR1, PCAsoil1, PCAsoil2)
+Sum.Muestreo_UR2 <-
+  Sum.Muestreo_UR2 %>% mutate(    # incorporando variables transformadas
+    t.pH = scale(log(pH)),
+    t.N = scale(log(N)),
+    t.K = scale(log(K)),
+    t.Na = scale(log(Na)),
+    t.Ca = scale(log(Ca / 100)),
+    t.P = scale(log(P / 100))
+  )
 
-Sum.Muestreo_UR2<-Sum.Muestreo_UR2%>%mutate( # incorporando variables transformadas
-       t.pH = scale(log(pH)),
-       t.N = scale(log(N)),
-       t.K = scale(log(K)),
-       t.Na = scale(log(Na)),
-       t.Ca = scale(log(Ca/100)),
-       t.P = scale(log(P/100)))
-
-
+#### Fig ?? PCA biplots --------------------------------------------------------
 fviz_pca_biplot(PCAsoil,
              geom.ind = "point", # show points only (nbut not "text")
              pointshape = 19, pointsize = 1.5,
@@ -541,7 +543,8 @@ fviz_pca_biplot(PCAsoil,
              addEllipses = TRUE, # Concentration ellipses
              legend.title = "Ambiente") #Grafica Figura 2
 
-# Analisis de del impacto de CP1 sobre la tasa de colonización ############
+#############   ANOVA on PCAsoil1  #############################################
+# Analisis del impacto de CP1 sobre la tasa de colonización ############
 # Creo que no necesitamos interpretar nada sobre el CP2
 
 PCA1soila <- lm(PCAsoil1 ~ area, data = Sum.Muestreo_UR2)
@@ -550,38 +553,38 @@ plot (PCA1soila)
 summary (PCA1soila)
 
 asin(sqrt(prop01))
-col_pca1_ar_rural <- lm(prop01 ~ PCAsoil1 , data = Sum.Muestreo_UR2, , subset = area == "rural")
+col_pca1_ar_rural <-
+  lm(prop01 ~ PCAsoil1 ,
+     data = Sum.Muestreo_UR2,
+     subset = area == "rural")
 anova(col_pca1_ar_rural)
 Anova(col_pca1_ar_rural)
-s1<-summary(col_pca1_ar_rural)
-fit1<-col_pca1_ar_rural
+s1 <- summary(col_pca1_ar_rural)
+fit1 <- col_pca1_ar_rural
 
-col_pca1_ar_urban <- lm(prop01 ~ PCAsoil1 , data = Sum.Muestreo_UR2, subset = area == "sidew")
+
+col_pca1_ar_urban <-
+  lm(prop01 ~ PCAsoil1 , data = Sum.Muestreo_UR2, subset = area == "sidew")
 anova(col_pca1_ar_urban)
-Anova(col_pca1_ar_urban, type="2")
-s2<-summary(col_pca1_ar_urban)
-fit2<-col_pca1_ar_urban
+Anova(col_pca1_ar_urban, type = "2")
+s2 <- summary(col_pca1_ar_urban)
+fit2 <- col_pca1_ar_urban
 
-df1 <- data.frame(x=1:3, y=1:3+rnorm(3))
-df2 <- data.frame(x=1:3, y=1:3+rnorm(3))
-fit1 <- lm(y~x, df1)
+
+df1 <- data.frame(x = 1:3, y = 1:3 + rnorm(3))
+df2 <- data.frame(x = 1:3, y = 1:3 + rnorm(3))
+fit1 <- lm(y ~ x, df1)
 s1 <- summary(fit1)$coefficients
-fit2 <- lm(y~x, df2)
+fit2 <- lm(y ~ x, df2)
 s2 <- summary(fit2)$coefficients
-db <- (s2[2,1]-s1[2,1])
-sd <- sqrt(s2[2,2]^2+s1[2,2]^2)
-df <- (fit1$df.residual+fit2$df.residual)
-td <- db/sd
-2*pt(-abs(td), df)
+db <- (s2[2, 1] - s1[2, 1])
+sd <- sqrt(s2[2, 2] ^ 2 + s1[2, 2] ^ 2)
+df <- (fit1$df.residual + fit2$df.residual)
+td <- db / sd
+2 * pt(-abs(td), df)
 
 
-
-
-
-
-
-
-# Grafico de anova regresion
+#### Figura ?? Grafico de anova regresion ------------------
 ggplot(Sum.Muestreo_UR2, aes(x=PCAsoil1, y=prop01*100, color=area))+
   geom_point(aes(fill=area),pch=21,size=2)+
   theme_classic()+ stat_smooth(method="lm")+
@@ -628,9 +631,6 @@ Sum.Muestreo_UR2%>%filter(area =="rural")%>%
                                    size=14, angle=0),
         axis.line = element_line(colour = "black", 
                                  size = 1, linetype = "solid"))
-
-
-
 
 # Evaluar las regresiones entr PCA y las vaeriables que son partes del PCA
 # sirve para entender su relacion e interprtear mejor las escalas del PCA
@@ -744,66 +744,6 @@ summary (pca_p)
 #   scale_fill_manual(labels=c("Rural","Profundo"),
 #                     values=c("#00ba38","#f8766d"))+
 #   guides(color=F, fill=F)
-
-###################################################
-####                  NMDS                     ####
-###################################################
-
-#NO SE MUESTRAN EN RESULTADOS
-
-head(soilpca)
-mtx_soil<-as.matrix(soilpca)
-set.seed(123)
-s_nmds <- metaMDS(mtx_soil, distance = "bray")
-s_nmds
-View(s_nmds)
-plot(s_nmds)
-
-
-envfit(nmds, env, permutations = 999, na.rm = TRUE)
-
-
-soil_data.scores <- as.data.frame(scores(s_nmds))
-soil_data.scores$Site <- Sum.Muestreo_UR1$Site
-soil_data.scores$area <- Sum.Muestreo_UR1$area
-
-ggplot(soil_data.scores, aes(x = NMDS1, y = NMDS2, color=area)) + 
-  geom_point(size = 4)+ 
-  theme_classic() + 
-  labs(x = "NMDS1", colour = "Ambiente", y = "NMDS2")  + 
-  scale_color_manual(labels=c("rural" = "Rural", 
-                              "sidew" = "Profundo"),
-                     values=c("#00ba38","#f8766d"))
-
-s_anosim<-anosim(mtx_soil, Sum.Muestreo_UR1$area, 
-       distance = "bray", permutations = 9999)
-
-
-
-#SOIL AND SPORE
-mtx_soilsp<-as.matrix(soil_spore_m)
-set.seed(123)
-ssp_nmds <- metaMDS(mtx_soilsp, distance = "bray")
-ssp_nmds
-plot(ssp_nmds)
-
-soilsp_data.scores <- as.data.frame(scores(ssp_nmds))
-soilsp_data.scores$Site <- Sum.Muestreo_UR1$Site
-soilsp_data.scores$area <- Sum.Muestreo_UR1$area
-
-ggplot(soilsp_data.scores, aes(x = NMDS1, y = NMDS2, color=area)) + 
-  geom_point(size = 4)+ 
-  theme_classic() + 
-  labs(x = "NMDS1", colour = "Ambient", y = "NMDS2")  + 
-  scale_color_manual(labels=c("rural" = "Rural", 
-                              "sidew" = "Profundo"),
-                     values=c("#00ba38","#f8766d"))
-
-sp_anosim<-anosim(mtx_soilsp, Sum.Muestreo_UR1$area, 
-       distance = "bray", permutations = 9999)
-
-
-
 
 #########################################################
 #########################################################
